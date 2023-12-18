@@ -51,8 +51,7 @@ func ConvertVideo(videoPath string, randomStr string) error {
 			return err
 		}
 
-		message := fmt.Sprintf("### Video conversion completed!\n videoId: %s\n scale: %s\n time: %s\n Url: %s", randomStr, resolution.Name, time.Since(start), baseUrl+randomStr+"index.m3u8?scale="+resolution.Name)
-		err = SendDiscordNotification(webhookUrl, message)
+		err = sendDiscordNotification(webhookUrl, randomStr, resolution.Name, string(time.Since(start)), baseUrl+randomStr+"index.m3u8?scale="+resolution.Name)
 		if err != nil {
 			return fmt.Errorf("Failed to send Discord notification: %v", err)
 		}

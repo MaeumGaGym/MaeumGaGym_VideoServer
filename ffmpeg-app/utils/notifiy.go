@@ -7,9 +7,36 @@ import (
 	"net/http"
 )
 
-func SendDiscordNotification(webhookURL, message string) error {
-	payload := map[string]string{
-		"content": message,
+func sendDiscordNotification(webhookURL, videoId, scale, duration, url string) error {
+	payload := map[string]interface{}{
+		"embeds": []map[string]interface{}{
+			{
+				"title": "Video Conversion Completed",
+				"color": 16711680,
+				"fields": []map[string]string{
+					{
+						"name":   "Video ID",
+						"value":  videoId,
+						"inline": "true",
+					},
+					{
+						"name":   "Scale",
+						"value":  scale,
+						"inline": "true",
+					},
+					{
+						"name":   "Duration",
+						"value":  duration,
+						"inline": "true",
+					},
+					{
+						"name":   "URL",
+						"value":  url,
+						"inline": "false",
+					},
+				},
+			},
+		},
 	}
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
