@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"os"
 	"os/exec"
+	"time"
 )
 
 var baseUrl = os.Getenv("BASE_URL")
@@ -41,6 +42,8 @@ func ConvertVideo(videoPath string, randomStr string) error {
 		outputTSPath := outputDirPath + u.String() + "-%04d.ts"
 		hlsBaseUrl := baseUrl + randomStr + "/"
 
+		start := time.Now()
+
 		cmd := exec.Command("ffmpeg", "-i", videoPath, "-vf", "scale="+resolution.Size, "-c:v", "libx264", "-hls_time", "9", "-hls_list_size", "0", "-hls_base_url", hlsBaseUrl, "-hls_segment_filename", outputTSPath, outputM3U8Path)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
@@ -48,7 +51,7 @@ func ConvertVideo(videoPath string, randomStr string) error {
 			return err
 		}
 
-		message := fmt.Sprintf("Video conversion completed: %s : %s", randomStr, resolution.Name)
+		message := fmt.Sprintf("### Video conversion completed!\n videoId: %s\n scale: %s\n time: %s", randomStr, resolution.Name, time.Since(start))
 		err = SendDiscordNotification(webhookUrl, message)
 		if err != nil {
 			return fmt.Errorf("Failed to send Discord notification: %v", err)
