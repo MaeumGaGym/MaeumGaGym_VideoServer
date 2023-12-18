@@ -1,0 +1,30 @@
+version: '3'
+services:
+  file-server:
+    build: ./go-file-server/ 
+    ports:
+      - "9999:9999"
+    volumes:
+      - video-data:/app/videos
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBITMQ_HOST: rabbitmq
+    restart: always
+  ffmpeg-app:
+    build: ./ffmpeg-app/
+    volumes:
+      - video-data:/app/videos
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      BASE_URL: https://video.pokabook.kr/
+    restart: always
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+volumes:
+  video-data:
