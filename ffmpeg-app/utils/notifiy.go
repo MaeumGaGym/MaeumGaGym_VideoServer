@@ -12,7 +12,7 @@ func sendDiscordNotification(webhookURL, videoId, scale, duration, url string) e
 		"embeds": []map[string]interface{}{
 			{
 				"title": "Video Conversion Completed",
-				"color": 16711680,
+				"color": 8900331,
 				"fields": []map[string]string{
 					{
 						"name":   "Video ID",
