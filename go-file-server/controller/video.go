@@ -16,7 +16,7 @@ func UploadVideo(ctx *gin.Context) {
 	file, err := ctx.FormFile("video")
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "No such video"})
 		return
 	}
 
