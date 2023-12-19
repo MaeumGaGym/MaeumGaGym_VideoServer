@@ -15,6 +15,11 @@ import (
 func UploadVideo(ctx *gin.Context) {
 	file, err := ctx.FormFile("video")
 
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 
 	if ext != ".mov" && ext != ".mp4" {
