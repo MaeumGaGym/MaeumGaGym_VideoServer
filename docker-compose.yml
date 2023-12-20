@@ -19,8 +19,8 @@ services:
       - rabbitmq
     environment:
       RABBITMQ_HOST: rabbitmq
-      BASE_URL: https://video.pokabook.kr/
-      WEBHOOK_URL: ""
+      BASE_URL: ${BASE_URL}
+      WEBHOOK_URL: ${WEBHOOK_URL}
     restart: always
   rabbitmq:
     image: "rabbitmq:3-management"
