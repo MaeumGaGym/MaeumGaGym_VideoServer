@@ -30,31 +30,31 @@ func ConvertVideo(videoPath string, randomStr string) error {
 		{"720p", "1280x720"},
 		{"1080p", "1920x1080"},
 	}
-
 	for _, resolution := range resolutions {
-		outputDirPath := outputBasePath + resolution.Name + "/"
-		if err := os.MkdirAll(outputDirPath, 0755); err != nil {
-			return fmt.Errorf("failed to create output directory %s: %v", outputDirPath, err)
-		}
+		go func(name, size string) {
+			outputDirPath := outputBasePath + name + "/"
+			if err := os.MkdirAll(outputDirPath, 0755); err != nil {
+				fmt.Errorf("failed to create output directory %s: %v", outputDirPath, err)
+			}
 
-		u, _ := uuid.NewUUID()
-		outputM3U8Path := outputDirPath + "index.m3u8"
-		outputTSPath := outputDirPath + u.String() + "-%04d.ts"
-		hlsBaseUrl := baseUrl + randomStr + "/"
+			u, _ := uuid.NewUUID()
+			outputM3U8Path := outputDirPath + "index.m3u8"
+			outputTSPath := outputDirPath + u.String() + "-%04d.ts"
+			hlsBaseUrl := baseUrl + randomStr + "/"
 
-		start := time.Now()
+			start := time.Now()
 
-		cmd := exec.Command("ffmpeg", "-i", videoPath, "-vf", "scale="+resolution.Size, "-c:v", "libx264", "-hls_time", "9", "-hls_list_size", "0", "-hls_base_url", hlsBaseUrl, "-hls_segment_filename", outputTSPath, outputM3U8Path)
+			cmd := exec.Command("ffmpeg", "-i", videoPath, "-vf", "scale="+size, "-c:v", "libx264", "-hls_time", "9", "-hls_list_size", "0", "-hls_base_url", hlsBaseUrl, "-hls_segment_filename", outputTSPath, outputM3U8Path)
 
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			fmt.Printf("Error: %v, Output: %s\n", err, output)
-			return err
-		}
-		err = sendDiscordNotification(webhookUrl, randomStr, resolution.Name, time.Since(start).String(), baseUrl+randomStr+"/index.m3u8?scale="+resolution.Name)
-		if err != nil {
-			return fmt.Errorf("Failed to send Discord notification: %v", err)
-		}
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				fmt.Printf("Error: %v, Output: %s\n", err, output)
+			}
+			err = sendDiscordNotification(webhookUrl, randomStr, name, time.Since(start).String(), baseUrl+randomStr+"/index.m3u8?scale="+name)
+			if err != nil {
+				fmt.Errorf("Failed to send Discord notification: %v", err)
+			}
+		}(resolution.Name, resolution.Size)
 	}
 
 	err := os.Remove(videoPath)
