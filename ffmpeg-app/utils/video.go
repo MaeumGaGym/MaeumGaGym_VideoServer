@@ -44,7 +44,7 @@ func ConvertVideo(videoPath string, randomStr string) error {
 
 		start := time.Now()
 
-		cmd := exec.Command("ffmpeg", "-i", videoPath, "-vf", "scale="+resolution.Size, "-c:v", "mpeg2video", "-hls_time", "9", "-hls_list_size", "0", "-hls_base_url", hlsBaseUrl, "-hls_segment_filename", outputTSPath, outputM3U8Path)
+		cmd := exec.Command("ffmpeg", "-i", videoPath, "-vf", "scale="+resolution.Size, "-hls_time", "9", "-hls_list_size", "0", "-hls_base_url", hlsBaseUrl, "-hls_segment_filename", outputTSPath, outputM3U8Path)
 
 		output, err := cmd.CombinedOutput()
 		if err != nil {
