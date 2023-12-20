@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"path/filepath"
 	"pokabook/go-file-server/model"
 	"strings"
@@ -34,7 +35,7 @@ func UploadVideo(ctx *gin.Context) {
 
 	tempDir := "/app/videos"
 	tempFilePath := filepath.Join(tempDir, file.Filename)
-	log.Printf("Saving uploaded file to: %s\n", tempFilePath)
+	log.Println("Saving uploaded file to: ", tempFilePath)
 
 	if err := ctx.SaveUploadedFile(file, tempFilePath); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -95,4 +96,18 @@ func GetTS(ctx *gin.Context) {
 	}
 
 	ctx.Data(http.StatusOK, "video/MP2T", data)
+}
+
+func RemoveVideo(ctx *gin.Context) {
+	videoId := ctx.Param("id")
+
+	path := "/app/videos/" + videoId
+	log.Println("removing file to: ", path)
+
+	err := os.RemoveAll(path)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 }

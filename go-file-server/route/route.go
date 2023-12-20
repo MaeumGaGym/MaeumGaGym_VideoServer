@@ -9,4 +9,5 @@ func SetupRoutes(r *gin.Engine) {
 	r.POST("/upload", controller.UploadVideo)
 	r.GET("/:id/index.m3u8", controller.GetM3U8)
 	r.GET("/:id/:ts", controller.GetTS)
+	r.DELETE("/:id", controller.RemoveVideo)
 }
