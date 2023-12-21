@@ -1,17 +1,17 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"pokabook/go-file-server/model"
 	"strings"
-	"time"
 )
+
+var baseUrl = os.Getenv("BASE_URL")
 
 func UploadVideo(ctx *gin.Context) {
 	file, err := ctx.FormFile("video")
@@ -42,15 +42,15 @@ func UploadVideo(ctx *gin.Context) {
 		return
 	}
 
-	rand.NewSource(time.Now().UnixNano())
-	randomStr := fmt.Sprintf("%06d", rand.Intn(1000000))
+	randomStr, _ := uuid.NewUUID()
 
-	if err := model.ConvertVideo(tempFilePath, randomStr); err != nil {
+	videoId := string(randomStr[:8])
+	if err := model.ConvertVideo(tempFilePath, videoId); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	ctx.JSON(http.StatusOK, gin.H{"videoId": randomStr})
+	url := baseUrl + "/" + videoId + "/index.m3u8"
+	ctx.JSON(http.StatusOK, gin.H{"videoURL": url})
 }
 
 func GetM3U8(ctx *gin.Context) {

@@ -10,6 +10,7 @@ services:
       - rabbitmq
     environment:
       RABBITMQ_HOST: rabbitmq
+      BASE_URL: ${BASE_URL}
     restart: always
   ffmpeg-app:
     build: ./ffmpeg-app/
