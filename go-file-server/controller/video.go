@@ -43,8 +43,8 @@ func UploadVideo(ctx *gin.Context) {
 	}
 
 	randomStr, _ := uuid.NewUUID()
-
-	videoId := string(randomStr[:8])
+	videoId := randomStr.String()[:8]
+	
 	if err := model.ConvertVideo(tempFilePath, videoId); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
