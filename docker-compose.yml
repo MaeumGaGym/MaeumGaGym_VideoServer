@@ -1,11 +1,11 @@
 version: '3'
 services:
   file-server:
-    build: ./go-file-server/
+    build: ./go-file-server/ 
     ports:
       - "9999:9999"
     volumes:
-      - maeumgagym_video-data:/app/videos
+      - video-data:/app/videos
     depends_on:
       - rabbitmq
     environment:
@@ -15,7 +15,7 @@ services:
   ffmpeg-app:
     build: ./ffmpeg-app/
     volumes:
-      - maeumgagym_video-data:/app/videos
+      - video-data:/app/videos
     depends_on:
       - rabbitmq
     environment:
@@ -29,9 +29,4 @@ services:
       - "15672:15672"
       - "5672:5672"
 volumes:
-  maeumgagym_video-data:
-    driver: local
-    driver_opts:
-      type: nfs
-      o: addr=192.168.1.103,rw
-      device: :/Users/student/maeumgaGym
+  video-data:
