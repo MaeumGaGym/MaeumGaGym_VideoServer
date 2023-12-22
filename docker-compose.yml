@@ -33,5 +33,5 @@ volumes:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=localhost,rw
+      o: addr=192.168.1.103,rw
       device: :/Users/student/maeumgaGym
