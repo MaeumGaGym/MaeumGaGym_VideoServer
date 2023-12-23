@@ -49,7 +49,7 @@ func UploadVideo(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	url := baseUrl + "/" + videoId + "/index.m3u8"
+	url := baseUrl + videoId + "/index.m3u8"
 	ctx.JSON(http.StatusOK, gin.H{"videoURL": url})
 }
 
