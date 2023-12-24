@@ -16,7 +16,7 @@ services:
     build: ./ffmpeg-app/
     volumes:
       - video-data:/app/videos
-      - db-data:/db
+      - db-data:/app/db
     depends_on:
       - rabbitmq
     environment:
