@@ -5,6 +5,7 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 	"log"
 	"os"
+	"pokabook/ffmepg-app/database"
 	"pokabook/ffmepg-app/utils"
 )
 
@@ -50,6 +51,23 @@ func main() {
 	)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	unfinishedVideos, err := database.GetUnfinishedVideos()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, videoId := range unfinishedVideos {
+		videoMessage := VideoMessage{
+			Filepath: "./videos/" + videoId,
+			VideoID:  videoId,
+		}
+
+		err = utils.ConvertVideo(videoMessage.Filepath, videoMessage.VideoID)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
 	}
 
 	for msg := range msgs {

@@ -17,7 +17,12 @@ func UploadVideo(ctx *gin.Context) {
 	file, err := ctx.FormFile("video")
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "No such video"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "No video file was received"})
+		return
+	}
+
+	if file.Size > 50000000 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "The file is too large. The maximum size is 50MB"})
 		return
 	}
 
@@ -28,27 +33,26 @@ func UploadVideo(ctx *gin.Context) {
 		return
 	}
 
-	
 	randomStr, _ := uuid.NewUUID()
 	videoId := randomStr.String()[:8]
 
 	tempDir := "/app/videos/" + videoId
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
 		return
 	}
 
-	tempFilePath := filepath.Join(tempDir, file.Filename)
+	tempFilePath := filepath.Join(tempDir, videoId+ext)
 	log.Println("Saving uploaded file to: ", tempFilePath)
 
 	if err := ctx.SaveUploadedFile(file, tempFilePath); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
 		return
 	}
 
 	fileData, err := os.Open(tempFilePath)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
 		return
 	}
 	defer fileData.Close()
@@ -56,21 +60,22 @@ func UploadVideo(ctx *gin.Context) {
 	buffer := make([]byte, 512)
 	_, err = fileData.Read(buffer)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
 		return
 	}
 
 	mimeType := http.DetectContentType(buffer)
 	if mimeType != "video/quicktime" && mimeType != "video/mp4" {
+		os.Remove(tempFilePath)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type"})
 		return
 	}
 
 	if err := model.ConvertVideo(tempFilePath, videoId); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
 		return
 	}
-	
+
 	url := baseUrl + videoId + "/index.m3u8"
 	ctx.JSON(http.StatusOK, gin.H{"videoURL": url})
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"os"
 	"os/exec"
+	"pokabook/ffmepg-app/database"
 	"time"
 )
 
@@ -12,7 +13,6 @@ var baseUrl = os.Getenv("BASE_URL")
 var webhookUrl = os.Getenv("WEBHOOK_URL")
 
 func ConvertVideo(videoPath string, randomStr string) error {
-
 	if _, err := os.Stat(videoPath); os.IsNotExist(err) {
 		return fmt.Errorf("source video file does not exist: %s", videoPath)
 	}
@@ -33,6 +33,11 @@ func ConvertVideo(videoPath string, randomStr string) error {
 
 	for _, resolution := range resolutions {
 		outputDirPath := outputBasePath + resolution.Name + "/"
+		
+		if _, err := os.Stat(outputDirPath); !os.IsNotExist(err) {
+			continue
+		}
+
 		if err := os.MkdirAll(outputDirPath, 0755); err != nil {
 			return fmt.Errorf("failed to create output directory %s: %v", outputDirPath, err)
 		}
@@ -51,9 +56,15 @@ func ConvertVideo(videoPath string, randomStr string) error {
 			fmt.Printf("Error: %v, Output: %s\n", err, output)
 			return err
 		}
+
 		err = sendDiscordNotification(webhookUrl, randomStr, resolution.Name, time.Since(start).String(), baseUrl+randomStr+"/index.m3u8?scale="+resolution.Name)
 		if err != nil {
 			return fmt.Errorf("Failed to send Discord notification: %v", err)
+		}
+
+		err = database.SaveVideo(randomStr, resolution.Name, time.Since(start).String(), baseUrl+randomStr+"/index.m3u8?scale="+resolution.Name)
+		if err != nil {
+			return fmt.Errorf("Failed to save video data to sqlite: %v", err)
 		}
 	}
 
