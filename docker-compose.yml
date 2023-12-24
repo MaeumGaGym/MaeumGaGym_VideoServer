@@ -19,7 +19,6 @@ services:
       - db-data:/db
     depends_on:
       - rabbitmq
-      - sqlite
     environment:
       RABBITMQ_HOST: rabbitmq
       BASE_URL: ${BASE_URL}
