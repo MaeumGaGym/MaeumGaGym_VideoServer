@@ -16,8 +16,10 @@ services:
     build: ./ffmpeg-app/
     volumes:
       - video-data:/app/videos
+      - db-data:/appdb
     depends_on:
       - rabbitmq
+      - sqlite
     environment:
       RABBITMQ_HOST: rabbitmq
       BASE_URL: ${BASE_URL}
@@ -28,5 +30,11 @@ services:
     ports:
       - "15672:15672"
       - "5672:5672"
+  sqlite:
+    image: nouchka/sqlite3:latest
+    volumes:
+      - db-data:/db
+    restart: always
 volumes:
   video-data:
+  db-data:
