@@ -185,6 +185,11 @@ func GetTS(ctx *gin.Context) {
 func RemoveVideo(ctx *gin.Context) {
 	videoId := ctx.Param("id")
 
+	if !utils.VerifyToken(ctx.GetHeader("MaeumgaGym-Token")) {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return
+	}
+
 	path := "/app/videos/" + videoId
 	log.Println("removing file to: ", path)
 
