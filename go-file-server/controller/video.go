@@ -1,33 +1,86 @@
 package controller
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/h2non/filetype"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"pokabook/go-file-server/dto"
 	"pokabook/go-file-server/model"
+	"pokabook/go-file-server/utils"
 	"strings"
+	"time"
 )
 
 var baseUrl = os.Getenv("BASE_URL")
 
-func UploadVideo(ctx *gin.Context) {
-	file, err := ctx.FormFile("video")
+func Generate(ctx *gin.Context) {
+	var req dto.GenerateRequest
 
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if !utils.VerifyToken(ctx.GetHeader("Authorization")) {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return
+	}
+
+	randomPassword := utils.GenerateRandomPassword()
+
+	encryptedParams := utils.EncryptQueryParams(map[string]string{
+		"fileType":   req.FileType,
+		"TimeToLive": time.Now().Format(time.RFC3339),
+	}, randomPassword)
+
+	uploadURL := baseUrl + "upload?" + "params=" + url.QueryEscape(encryptedParams) + "&key=" + url.QueryEscape(string(randomPassword))
+
+	ctx.JSON(http.StatusOK, gin.H{"uploadURL": uploadURL})
+}
+
+func UploadVideo(ctx *gin.Context) {
+
+	encryptedParams := ctx.Query("params")
+
+	key := ctx.Query("key")
+
+	decryptedParams, err := utils.CustomDecrypt(encryptedParams, []byte(key))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to decrypt query params"})
+		return
+	}
+
+	var params map[string]string
+	if err := json.Unmarshal([]byte(decryptedParams), &params); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to convert decrypted params to map"})
+		return
+	}
+
+	requestTimeStr := params["TimeToLive"]
+	TimeToLive, err := time.Parse(time.RFC3339, requestTimeStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse request time"})
+		return
+	}
+
+	if time.Since(TimeToLive).Minutes() > 3 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Upload time exceeded 3 minutes"})
+		return
+	}
+
+	file, err := ctx.FormFile("video")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "No video file was received"})
 		return
 	}
 
-	if file.Size > 50000000 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "The file is too large. The maximum size is 50MB"})
-		return
-	}
-
 	ext := strings.ToLower(filepath.Ext(file.Filename))
-
 	if ext != ".mov" && ext != ".mp4" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file extension"})
 		return
@@ -43,8 +96,6 @@ func UploadVideo(ctx *gin.Context) {
 	}
 
 	tempFilePath := filepath.Join(tempDir, videoId+ext)
-	log.Println("Saving uploaded file to: ", tempFilePath)
-
 	if err := ctx.SaveUploadedFile(file, tempFilePath); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
 		return
@@ -56,18 +107,24 @@ func UploadVideo(ctx *gin.Context) {
 		return
 	}
 	defer fileData.Close()
-
-	buffer := make([]byte, 512)
+	buffer := make([]byte, 261)
 	_, err = fileData.Read(buffer)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
 		return
 	}
 
-	mimeType := http.DetectContentType(buffer)
-	if mimeType != "video/quicktime" && mimeType != "video/mp4" {
+	kind, err := filetype.Match(buffer)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
+		return
+	}
+
+	requestedFileType := params["fileType"]
+
+	if !utils.IsFileTypeMatched(requestedFileType, kind.MIME.Value) {
 		os.Remove(tempFilePath)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or mismatched file type"})
 		return
 	}
 

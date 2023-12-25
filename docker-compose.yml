@@ -11,6 +11,7 @@ services:
     environment:
       RABBITMQ_HOST: rabbitmq
       BASE_URL: ${BASE_URL}
+      SECRET_TOKEN: ${SECRET_TOKEN}
     restart: always
   ffmpeg-app:
     build: ./ffmpeg-app/
