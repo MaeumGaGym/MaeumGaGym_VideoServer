@@ -27,7 +27,7 @@ func Generate(ctx *gin.Context) {
 		return
 	}
 
-	if !utils.VerifyToken(ctx.GetHeader("Authorization")) {
+	if !utils.VerifyToken(ctx.GetHeader("MaeumgaGym-Token")) {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 		return
 	}
