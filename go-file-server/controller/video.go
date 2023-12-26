@@ -32,11 +32,15 @@ func Generate(ctx *gin.Context) {
 		return
 	}
 
+	randomStr, _ := uuid.NewUUID()
+	videoId := randomStr.String()[:8]
+
 	randomPassword := utils.GenerateRandomPassword()
 
 	encryptedParams := utils.EncryptQueryParams(map[string]string{
 		"fileType":   req.FileType,
 		"TimeToLive": time.Now().Format(time.RFC3339),
+		"videoId":    videoId,
 	}, randomPassword)
 
 	uploadURL := baseUrl + "upload?" + "params=" + url.QueryEscape(encryptedParams) + "&key=" + url.QueryEscape(string(randomPassword))
@@ -86,8 +90,7 @@ func UploadVideo(ctx *gin.Context) {
 		return
 	}
 
-	randomStr, _ := uuid.NewUUID()
-	videoId := randomStr.String()[:8]
+	videoId := params["videoId"]
 
 	tempDir := "/app/videos/" + videoId
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
