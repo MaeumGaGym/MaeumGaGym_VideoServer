@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/h2non/filetype"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -45,7 +44,7 @@ func Generate(ctx *gin.Context) {
 
 	uploadURL := baseUrl + "upload?" + "params=" + url.QueryEscape(encryptedParams) + "&key=" + url.QueryEscape(string(randomPassword))
 
-	ctx.JSON(http.StatusOK, gin.H{"uploadURL": uploadURL})
+	ctx.JSON(http.StatusOK, gin.H{"uploadURL": uploadURL, "videoId": videoId})
 }
 
 func UploadVideo(ctx *gin.Context) {
@@ -150,7 +149,7 @@ func GetM3U8(ctx *gin.Context) {
 
 	ctx.SetCookie("scale", scale, 3600, "", "", false, true)
 
-	data, err := model.GetVideo(videoId + "/" + scale + "/index.m3u8")
+	data, err := utils.GetVideoFile(videoId, scale)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "File does not exist"})
@@ -158,31 +157,6 @@ func GetM3U8(ctx *gin.Context) {
 	}
 
 	ctx.Data(http.StatusOK, "application/x-mpegURL", data)
-}
-
-func GetTS(ctx *gin.Context) {
-	videoId := ctx.Param("id")
-	videoFile := ctx.Param("ts")
-	ext := filepath.Ext(videoFile)
-
-	if ext != ".ts" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file extension"})
-		return
-	}
-
-	scale, err := ctx.Cookie("scale")
-	if err != nil {
-		scale = "720p"
-	}
-
-	data, err := model.GetVideo(videoId + "/" + scale + "/" + videoFile)
-
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "File does not exist"})
-		return
-	}
-
-	ctx.Data(http.StatusOK, "video/MP2T", data)
 }
 
 func RemoveVideo(ctx *gin.Context) {
@@ -193,10 +167,8 @@ func RemoveVideo(ctx *gin.Context) {
 		return
 	}
 
-	path := "/app/videos/" + videoId
-	log.Println("removing file to: ", path)
+	err := utils.RemoveFile(videoId)
 
-	err := os.RemoveAll(path)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

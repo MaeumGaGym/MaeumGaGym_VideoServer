@@ -5,12 +5,14 @@ import (
 	"github.com/google/uuid"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"pokabook/ffmepg-app/database"
 	"time"
 )
 
 var baseUrl = os.Getenv("BASE_URL")
 var webhookUrl = os.Getenv("WEBHOOK_URL")
+var bucketName = os.Getenv("STORAGE_BUCKET")
 
 func ConvertVideo(videoPath string, randomStr string) error {
 	if _, err := os.Stat(videoPath); os.IsNotExist(err) {
@@ -33,7 +35,7 @@ func ConvertVideo(videoPath string, randomStr string) error {
 
 	for _, resolution := range resolutions {
 		outputDirPath := outputBasePath + resolution.Name + "/"
-		
+
 		if _, err := os.Stat(outputDirPath); !os.IsNotExist(err) {
 			continue
 		}
@@ -45,7 +47,7 @@ func ConvertVideo(videoPath string, randomStr string) error {
 		u, _ := uuid.NewUUID()
 		outputM3U8Path := outputDirPath + "index.m3u8"
 		outputTSPath := outputDirPath + u.String() + "-%04d.ts"
-		hlsBaseUrl := baseUrl + randomStr + "/"
+		hlsBaseUrl := fmt.Sprintf("https://%s/%s/%s/%s/", endpoint, bucketName, randomStr, resolution.Name)
 
 		start := time.Now()
 
@@ -54,6 +56,35 @@ func ConvertVideo(videoPath string, randomStr string) error {
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			fmt.Printf("Error: %v, Output: %s\n", err, output)
+			return err
+		}
+		err = filepath.Walk(outputDirPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if !info.IsDir() {
+				contentType := ""
+				if filepath.Ext(path) == ".ts" {
+					contentType = "video/MP2T"
+				} else if filepath.Ext(path) == ".m3u8" {
+					contentType = "application/x-mpegURL"
+				}
+
+				err = UploadFile(bucketName, filepath.Join(randomStr, resolution.Name, info.Name()), path, contentType)
+				if err != nil {
+					return fmt.Errorf("Failed to upload file to Minio: %v", err)
+				}
+
+				err = os.Remove(path)
+				if err != nil {
+					return fmt.Errorf("Failed to delete file: %v", err)
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
 			return err
 		}
 
@@ -71,6 +102,11 @@ func ConvertVideo(videoPath string, randomStr string) error {
 	err := os.Remove(videoPath)
 	if err != nil {
 		return fmt.Errorf("failed to delete source video file %s: %v", videoPath, err)
+	}
+
+	err = os.RemoveAll(outputBasePath)
+	if err != nil {
+		return fmt.Errorf("Failed to delete directory: %v", err)
 	}
 
 	return nil

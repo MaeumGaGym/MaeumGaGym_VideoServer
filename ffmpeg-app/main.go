@@ -16,6 +16,7 @@ type VideoMessage struct {
 
 func main() {
 	log.Println("Ffmpeg Start!")
+	utils.InitMinio()
 	conn, err := amqp091.Dial("amqp://guest:guest@" + os.Getenv("RABBITMQ_HOST") + ":5672/")
 	if err != nil {
 		log.Fatal(err)

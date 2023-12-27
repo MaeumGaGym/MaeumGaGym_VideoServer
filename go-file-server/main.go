@@ -10,7 +10,9 @@ func main() {
 	r := gin.Default()
 
 	route.SetupRoutes(r)
-	utils.Init()
+
+	utils.InitRabbitMQ()
+	utils.InitMinio()
 
 	r.Run(":9999")
 }

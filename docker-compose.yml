@@ -12,6 +12,10 @@ services:
       RABBITMQ_HOST: rabbitmq
       BASE_URL: ${BASE_URL}
       SECRET_TOKEN: ${SECRET_TOKEN}
+      STORAGE_BUCKET: ${STORAGE_BUCKET}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
     restart: always
   ffmpeg-app:
     build: ./ffmpeg-app/
@@ -24,6 +28,10 @@ services:
       RABBITMQ_HOST: rabbitmq
       BASE_URL: ${BASE_URL}
       WEBHOOK_URL: ${WEBHOOK_URL}
+      STORAGE_BUCKET: ${STORAGE_BUCKET}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
     restart: always
   rabbitmq:
     image: "rabbitmq:3-management"

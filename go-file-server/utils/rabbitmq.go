@@ -17,7 +17,7 @@ var conn *amqp091.Connection
 var ch *amqp091.Channel
 var q amqp091.Queue
 
-func Init() {
+func InitRabbitMQ() {
 	var err error
 	conn, err = amqp091.Dial("amqp://guest:guest@" + os.Getenv("RABBITMQ_HOST") + ":5672/")
 	if err != nil {
