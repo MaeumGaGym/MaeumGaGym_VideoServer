@@ -21,6 +21,24 @@ func ConvertVideo(videoPath string, randomStr string) error {
 
 	outputBasePath := fmt.Sprintf("./videos/%s/", randomStr)
 
+	outputThumbnailPath := outputBasePath + "thumbnail.png"
+	cmd := exec.Command("ffmpeg", "-i", videoPath, "-vf", "thumbnail", "-vframes", "1", outputThumbnailPath)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("Error: %v, Output: %s\n", err, output)
+		return err
+	}
+
+	err = UploadFile(bucketName, filepath.Join(randomStr, "thumbnail.png"), outputThumbnailPath, "image/png")
+	if err != nil {
+		return fmt.Errorf("Failed to upload thumbnail to MinIO: %v", err)
+	}
+
+	err = os.Remove(outputThumbnailPath)
+	if err != nil {
+		return fmt.Errorf("Failed to delete thumbnail file: %v", err)
+	}
+
 	resolutions := []struct {
 		Name string
 		Size string
@@ -99,7 +117,7 @@ func ConvertVideo(videoPath string, randomStr string) error {
 		}
 	}
 
-	err := os.Remove(videoPath)
+	err = os.Remove(videoPath)
 	if err != nil {
 		return fmt.Errorf("failed to delete source video file %s: %v", videoPath, err)
 	}
