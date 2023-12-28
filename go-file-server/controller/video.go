@@ -175,3 +175,8 @@ func RemoveVideo(ctx *gin.Context) {
 	}
 
 }
+
+func HealthCheck(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, nil)
+	return
+}
