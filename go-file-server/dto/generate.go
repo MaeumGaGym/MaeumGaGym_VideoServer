@@ -1,5 +1,5 @@
 package dto
 
 type GenerateRequest struct {
-	FileType string `json:"fileType"`
+	FileType string `json:"file_type"`
 }
