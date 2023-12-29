@@ -17,6 +17,8 @@ import (
 )
 
 var baseUrl = os.Getenv("BASE_URL")
+var bucketName = os.Getenv("STORAGE_BUCKET")
+var endpoint = os.Getenv("STORAGE_ENDPOINT")
 
 func Generate(ctx *gin.Context) {
 	var req dto.GenerateRequest
@@ -135,8 +137,9 @@ func UploadVideo(ctx *gin.Context) {
 		return
 	}
 
-	url := baseUrl + videoId + "/index.m3u8"
-	ctx.JSON(http.StatusOK, gin.H{"videoURL": url})
+	videoURL := baseUrl + videoId + "/index.m3u8"
+	thumbnailURL := "https://" + endpoint + "/" + bucketName + "/" + videoId + "/thumbnail.png"
+	ctx.JSON(http.StatusOK, gin.H{"videoURL": videoURL, "thumbnailURL": thumbnailURL})
 }
 
 func GetM3U8(ctx *gin.Context) {
