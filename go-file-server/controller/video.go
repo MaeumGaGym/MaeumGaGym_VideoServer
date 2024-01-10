@@ -137,9 +137,7 @@ func UploadVideo(ctx *gin.Context) {
 		return
 	}
 
-	videoURL := baseUrl + videoId + "/index.m3u8"
-	thumbnailURL := "https://" + endpoint + "/" + bucketName + "/" + videoId + "/thumbnail.png"
-	ctx.JSON(http.StatusOK, gin.H{"videoURL": videoURL, "thumbnailURL": thumbnailURL})
+	ctx.JSON(http.StatusOK, gin.H{"videoId": videoId})
 }
 
 func GetM3U8(ctx *gin.Context) {
@@ -180,6 +178,6 @@ func RemoveVideo(ctx *gin.Context) {
 }
 
 func HealthCheck(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, nil)
+	ctx.JSON(http.StatusOK, "hello, world")
 	return
 }
